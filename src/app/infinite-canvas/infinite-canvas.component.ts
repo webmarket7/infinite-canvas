@@ -1,6 +1,16 @@
-import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, ViewChild } from '@angular/core';
+import {
+  AfterViewInit,
+  ChangeDetectionStrategy,
+  Component,
+  input,
+  ElementRef,
+  ViewChild,
+  InputSignal,
+  effect, signal, WritableSignal
+} from '@angular/core';
 import { Viewport } from 'pixi-viewport';
-import { Application, Renderer } from 'pixi.js';
+import { Application, Container, ContainerChild, Renderer } from 'pixi.js';
+import JSONCanvas, { GenericNode } from '@trbn/jsoncanvas';
 
 import { INFINITE_CANVAS_PROVIDERS } from './infinite-canvas.providers';
 
@@ -20,6 +30,13 @@ import { InfiniteCanvasGridService } from './grid';
   ],
 })
 export class InfiniteCanvasComponent implements AfterViewInit {
+  readonly app: WritableSignal<Application<Renderer> | null> = signal<Application<Renderer> | null>(null);
+  readonly viewport: WritableSignal<Viewport | null> = signal<Viewport | null>(null);
+  readonly gridLayer: WritableSignal<Container | null> = signal<Container | null>(null);
+  readonly nodeLayer: WritableSignal<Container | null> = signal<Container | null>(null);
+
+  readonly doc: InputSignal<JSONCanvas | undefined> = input<JSONCanvas>();
+
   @ViewChild('canvasContainer', { static: true }) private _host!: ElementRef<HTMLDivElement>;
 
   constructor(
@@ -27,12 +44,39 @@ export class InfiniteCanvasComponent implements AfterViewInit {
     private _viewportService: InfiniteCanvasViewportService,
     private _gridService: InfiniteCanvasGridService,
   ) {
+    effect(() => {
+      const doc: JSONCanvas | undefined = this.doc();
+      const nodeLayer: Container | null = this.nodeLayer();
+
+      if (!nodeLayer || !doc) {
+        return;
+      }
+
+      nodeLayer.removeChildren();
+
+      doc.getNodes().forEach((node: GenericNode) => {
+        const sprite: ContainerChild | null = this._viewportService.makeSprite(node);
+
+        if (sprite) {
+          nodeLayer.addChild(sprite);
+        }
+      });
+    });
   }
 
   async ngAfterViewInit(): Promise<void> {
     const app: Application<Renderer> = await this._pixiApplicationService.init(this._host);
     const viewport: Viewport = this._viewportService.create(app);
+    const gridLayer = new Container();
+    const nodeLayer = new Container();
 
-    this._gridService.attach(app, viewport);
+    viewport.addChild(gridLayer, nodeLayer);
+
+    this._gridService.attach(app, gridLayer, viewport);
+
+    this.gridLayer.set(gridLayer);
+    this.nodeLayer.set(nodeLayer);
+    this.viewport.set(viewport);
+    this.app.set(app);
   }
 }
