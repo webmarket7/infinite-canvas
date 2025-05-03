@@ -11,6 +11,7 @@ import {
   INFINITE_CANVAS_GRID_CONFIG,
   InfiniteCanvasGridService,
 } from './grid';
+import { InfiniteCanvasNodeRendererService } from './node-renderer';
 
 
 export const INFINITE_CANVAS_PROVIDERS = [
@@ -19,5 +20,6 @@ export const INFINITE_CANVAS_PROVIDERS = [
   { provide: INFINITE_CANVAS_GRID_CONFIG, useValue: DEFAULT_INFINITE_CANVAS_GRID_CONFIG },
   InfiniteCanvasPixiApplicationService,
   InfiniteCanvasViewportService,
-  InfiniteCanvasGridService
+  InfiniteCanvasGridService,
+  InfiniteCanvasNodeRendererService
 ];

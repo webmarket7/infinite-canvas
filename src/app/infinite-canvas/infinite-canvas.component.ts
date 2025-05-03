@@ -17,6 +17,7 @@ import { INFINITE_CANVAS_PROVIDERS } from './infinite-canvas.providers';
 import { InfiniteCanvasPixiApplicationService } from './pixi-application';
 import { InfiniteCanvasViewportService } from './viewport';
 import { InfiniteCanvasGridService } from './grid';
+import { InfiniteCanvasNodeRendererService } from './node-renderer';
 
 
 @Component({
@@ -43,6 +44,7 @@ export class InfiniteCanvasComponent implements AfterViewInit {
     private _pixiApplicationService: InfiniteCanvasPixiApplicationService,
     private _viewportService: InfiniteCanvasViewportService,
     private _gridService: InfiniteCanvasGridService,
+    private _nodeRendererService: InfiniteCanvasNodeRendererService
   ) {
     effect(() => {
       const doc: JSONCanvas | undefined = this.doc();
@@ -52,15 +54,7 @@ export class InfiniteCanvasComponent implements AfterViewInit {
         return;
       }
 
-      nodeLayer.removeChildren();
-
-      doc.getNodes().forEach((node: GenericNode) => {
-        const sprite: ContainerChild | null = this._viewportService.makeSprite(node);
-
-        if (sprite) {
-          nodeLayer.addChild(sprite);
-        }
-      });
+      this._nodeRendererService.render(nodeLayer, doc.getNodes());
     });
   }
 
@@ -68,9 +62,16 @@ export class InfiniteCanvasComponent implements AfterViewInit {
     const app: Application<Renderer> = await this._pixiApplicationService.init(this._host);
     const viewport: Viewport = this._viewportService.create(app);
     const gridLayer = new Container();
+
     const nodeLayer = new Container();
 
-    viewport.addChild(gridLayer, nodeLayer);
+    nodeLayer.eventMode = 'static';
+    nodeLayer.hitArea = app.screen;
+
+    viewport.addChild(
+      gridLayer,
+      nodeLayer
+    );
 
     this._gridService.attach(app, gridLayer, viewport);
 
