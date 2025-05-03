@@ -1,12 +1,12 @@
 import { Component } from '@angular/core';
 
-import { InfiniteCanvasComponent } from './infinite-canvas/infinite-canvas.component';
+import { CourseBuilderComponent } from './course-builder';
 
 
 @Component({
   selector: 'app-root',
   imports: [
-    InfiniteCanvasComponent
+    CourseBuilderComponent,
   ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',

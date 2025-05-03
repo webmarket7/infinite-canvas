@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@angular/core';
-import { Application, EventSystem } from 'pixi.js';
+import { Application, ContainerChild, EventSystem } from 'pixi.js';
 import { Viewport } from 'pixi-viewport';
+import { GenericNode } from '@trbn/jsoncanvas';
 
 import { INFINITE_CANVAS_VIEWPORT_CONFIG, InfiniteCanvasViewportConfig } from './viewport.config';
 
@@ -40,5 +41,11 @@ export class InfiniteCanvasViewportService {
     app.stage.addChild(viewport);
 
     return viewport;
+  }
+
+  makeSprite(node: GenericNode): ContainerChild | null {
+    console.log('makeSprite', node);
+
+    return null;
   }
 }

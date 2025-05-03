@@ -52,6 +52,15 @@ For end-to-end (e2e) testing, run:
 ng e2e
 ```
 
+## Make locally served app available online
+
+```bash
+ngrok http http://localhost:4200
+
+$env:__VITE_ADDITIONAL_SERVER_ALLOWED_HOSTS="ngrok_generated_domain"
+ng serve
+```
+
 Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
 
 ## Additional Resources
