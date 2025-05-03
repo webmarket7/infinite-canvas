@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Container, ContainerChild, FederatedPointerEvent, Graphics, Renderer } from 'pixi.js';
-import { GenericNode } from '@trbn/jsoncanvas';
+import JSONCanvas, { GenericNode } from '@trbn/jsoncanvas';
 
 
 enum CanvasColor {
@@ -24,7 +24,7 @@ const CANVAS_COLORS_MAP = {
 @Injectable()
 export class InfiniteCanvasNodeRendererService {
 
-  render(targetLayer: Container, nodes: GenericNode[]): void {
+  render(targetLayer: Container, doc: JSONCanvas): void {
     targetLayer.removeChildren();
 
     /* ▲  Store offset inside the closure so each sprite has its own value */
@@ -47,7 +47,7 @@ export class InfiniteCanvasNodeRendererService {
       }
     };
 
-    nodes.forEach(node => {
+    doc.getNodes().forEach(node => {
       const sprite = this._makeSprite(node);
       if (!sprite) return;
 

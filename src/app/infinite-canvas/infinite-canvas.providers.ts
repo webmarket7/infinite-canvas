@@ -12,6 +12,7 @@ import {
   InfiniteCanvasGridService,
 } from './grid';
 import { InfiniteCanvasNodeRendererService } from './node-renderer';
+import { InfiniteCanvasEdgeRendererService } from './edge-renderer';
 
 
 export const INFINITE_CANVAS_PROVIDERS = [
@@ -21,5 +22,6 @@ export const INFINITE_CANVAS_PROVIDERS = [
   InfiniteCanvasPixiApplicationService,
   InfiniteCanvasViewportService,
   InfiniteCanvasGridService,
-  InfiniteCanvasNodeRendererService
+  InfiniteCanvasNodeRendererService,
+  InfiniteCanvasEdgeRendererService,
 ];

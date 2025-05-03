@@ -3,23 +3,23 @@ import { httpResource, HttpResourceRef } from '@angular/common/http';
 import { JSONCanvas } from '@trbn/jsoncanvas';
 
 
-const API_URL = 'https://mpc5bad5c145798279bf.free.beeceptor.com/data';
-
 @Injectable({ providedIn: 'root' })
 export class CanvasResourceService {
-  private readonly _resource: HttpResourceRef<JSONCanvas | undefined> = httpResource(API_URL, {
-    parse: (raw: unknown): JSONCanvas | undefined => {
-      let jsonCanvas: JSONCanvas | undefined = undefined;
+  private readonly _resource: HttpResourceRef<JSONCanvas | undefined> = httpResource(
+    '/mocks/json-canvas.json',
+    {
+      parse: (raw: unknown): JSONCanvas | undefined => {
+        let jsonCanvas: JSONCanvas | undefined = undefined;
 
-      try {
-        jsonCanvas = JSONCanvas.fromString(JSON.stringify(raw));
-      } catch (e) {
-        console.error('Error parsing JSONCanvas:', e);
+        try {
+          jsonCanvas = JSONCanvas.fromString(JSON.stringify(raw));
+        } catch (e) {
+          console.error('Error parsing JSONCanvas:', e);
+        }
+
+        return jsonCanvas;
       }
-
-      return jsonCanvas;
-    }
-  });
+    });
 
   readonly doc: Signal<JSONCanvas | undefined> = computed(() => this._resource.value());
   readonly loading: Signal<boolean> = computed(() => this._resource.isLoading());
