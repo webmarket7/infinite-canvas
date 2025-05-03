@@ -1,5 +1,14 @@
 import { effect, Injectable, signal, Signal, WritableSignal } from '@angular/core';
-import { Application, Container, ContainerChild, FederatedPointerEvent, Point, Renderer } from 'pixi.js';
+import {
+  Application,
+  Bounds,
+  Container,
+  ContainerChild,
+  FederatedPointerEvent,
+  Point,
+  Rectangle,
+  Renderer
+} from 'pixi.js';
 import { Viewport } from 'pixi-viewport';
 import JSONCanvas, { GenericNode } from '@trbn/jsoncanvas';
 
@@ -64,24 +73,80 @@ export class InfiniteCanvasNodeLayerService {
 
     this._onDragMove = (e: FederatedPointerEvent): void => {
       const dragTarget = this._store.dragTarget();
-
       if (!dragTarget) {
         return;
       }
 
       const { id, pickupPositionInCanvas, pickupPositionInElement } = dragTarget;
-      const draggedCard: Container<ContainerChild> | null = nodeLayer.getChildByLabel(id);
-
+      const draggedCard = nodeLayer.getChildByLabel(id) as Container<ContainerChild> | null;
       if (!draggedCard) {
         return;
       }
 
-      const pos: Point = e.getLocalPosition(draggedCard.parent);
+      const parent = draggedCard.parent!;
+      const pos: Point = e.getLocalPosition(parent);
       const offsetX = pickupPositionInCanvas.x - pickupPositionInElement.x;
       const offsetY = pickupPositionInCanvas.y - pickupPositionInElement.y;
-      const x: number = pos.x + offsetX;
-      const y: number = pos.y + offsetY;
+      const x = pos.x + offsetX;
+      const y = pos.y + offsetY;
 
+      // future bounds of dragged card
+      const projected = new Rectangle(x, y, draggedCard.width, draggedCard.height);
+
+      for (const child of (nodeLayer as Container<ContainerChild>).children) {
+        if (child === draggedCard) {
+          continue;
+        }
+
+        // other card’s bounds
+        const other = new Rectangle(child.x, child.y, child.width, child.height);
+
+        if (projected.intersects(other)) {
+          // --- collision resolution ---
+          const projectedLeft   = projected.x;
+          const projectedRight  = projected.x + projected.width;
+          const projectedTop    = projected.y;
+          const projectedBottom = projected.y + projected.height;
+
+          const otherLeft   = other.x;
+          const otherRight  = other.x + other.width;
+          const otherTop    = other.y;
+          const otherBottom = other.y + other.height;
+
+          // how much they overlap on each axis
+          const overlapX = Math.min(projectedRight, otherRight) - Math.max(projectedLeft, otherLeft);
+          const overlapY = Math.min(projectedBottom, otherBottom) - Math.max(projectedTop, otherTop);
+
+          let resolvedX = x;
+          let resolvedY = y;
+
+          if (overlapX < overlapY) {
+            // slide horizontally
+            if (projectedLeft < otherLeft) {
+              // push to the left of `other`
+              resolvedX = otherLeft - projected.width;
+            } else {
+              // push to the right of `other`
+              resolvedX = otherRight;
+            }
+          } else {
+            // slide vertically
+            if (projectedTop < otherTop) {
+              // push above `other`
+              resolvedY = otherTop - projected.height;
+            } else {
+              // push below `other`
+              resolvedY = otherBottom;
+            }
+          }
+
+          // apply the “snapped” position and don’t run the normal set
+          this._store.setNodePosition(id, resolvedX, resolvedY);
+          return;
+        }
+      }
+
+      // no collisions → just move normally
       this._store.setNodePosition(id, x, y);
     };
 
