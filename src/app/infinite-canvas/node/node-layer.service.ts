@@ -89,64 +89,59 @@ export class InfiniteCanvasNodeLayerService {
       const offsetY = pickupPositionInCanvas.y - pickupPositionInElement.y;
       const x = pos.x + offsetX;
       const y = pos.y + offsetY;
-
-      // future bounds of dragged card
       const projected = new Rectangle(x, y, draggedCard.width, draggedCard.height);
+      const desiredGap = 60;
 
       for (const child of (nodeLayer as Container<ContainerChild>).children) {
         if (child === draggedCard) {
           continue;
         }
 
-        // other card’s bounds
-        const other = new Rectangle(child.x, child.y, child.width, child.height);
+        const safeLeft = child.x - desiredGap;
+        const safeRight = child.x + child.width + desiredGap;
+        const safeTop = child.y - desiredGap;
+        const safeBottom = child.y + child.height + desiredGap;
 
-        if (projected.intersects(other)) {
-          // --- collision resolution ---
-          const projectedLeft   = projected.x;
-          const projectedRight  = projected.x + projected.width;
-          const projectedTop    = projected.y;
-          const projectedBottom = projected.y + projected.height;
-
-          const otherLeft   = other.x;
-          const otherRight  = other.x + other.width;
-          const otherTop    = other.y;
-          const otherBottom = other.y + other.height;
-
-          // how much they overlap on each axis
-          const overlapX = Math.min(projectedRight, otherRight) - Math.max(projectedLeft, otherLeft);
-          const overlapY = Math.min(projectedBottom, otherBottom) - Math.max(projectedTop, otherTop);
+        if (
+          projected.x + projected.width > safeLeft &&
+          projected.x < safeRight &&
+          projected.y + projected.height > safeTop &&
+          projected.y < safeBottom
+        ) {
+          // compute overlaps of projected vs. safe-zone
+          const overlapX = Math.min(projected.x + projected.width, safeRight)
+            - Math.max(projected.x, safeLeft);
+          const overlapY = Math.min(projected.y + projected.height, safeBottom)
+            - Math.max(projected.y, safeTop);
 
           let resolvedX = x;
           let resolvedY = y;
 
           if (overlapX < overlapY) {
-            // slide horizontally
-            if (projectedLeft < otherLeft) {
-              // push to the left of `other`
-              resolvedX = otherLeft - projected.width;
+            // slide horizontally out of the safe zone
+            if (projected.x < child.x) {
+              // coming from left → place to the left of safe zone
+              resolvedX = safeLeft - projected.width;
             } else {
-              // push to the right of `other`
-              resolvedX = otherRight;
+              // coming from right → place to the right of safe zone
+              resolvedX = safeRight;
             }
           } else {
-            // slide vertically
-            if (projectedTop < otherTop) {
-              // push above `other`
-              resolvedY = otherTop - projected.height;
+            // slide vertically out of the safe zone
+            if (projected.y < child.y) {
+              // coming from above → place above safe zone
+              resolvedY = safeTop - projected.height;
             } else {
-              // push below `other`
-              resolvedY = otherBottom;
+              // coming from below → place below safe zone
+              resolvedY = safeBottom;
             }
           }
 
-          // apply the “snapped” position and don’t run the normal set
           this._store.setNodePosition(id, resolvedX, resolvedY);
           return;
         }
       }
 
-      // no collisions → just move normally
       this._store.setNodePosition(id, x, y);
     };
 
