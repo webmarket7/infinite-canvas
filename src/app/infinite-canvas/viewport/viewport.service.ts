@@ -47,6 +47,8 @@ export class InfiniteCanvasViewportService {
     });
 
     viewport.label = this.label;
+    viewport.eventMode = 'static';
+
     viewport
       .drag({ factor: this._config.dragFactor, mouseButtons: 'middle', wheel: false })
       .pinch()

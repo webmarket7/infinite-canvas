@@ -5,6 +5,7 @@ import JSONCanvas, { GenericNode } from '@trbn/jsoncanvas';
 
 import { InfiniteCanvasStore } from '../state';
 import { InfiniteCanvasNodeRendererService } from './node-renderer.service';
+import { InfiniteCanvasViewportService } from '../viewport';
 
 
 @Injectable()
@@ -23,17 +24,19 @@ export class InfiniteCanvasNodeLayerService {
 
   constructor(private _store: InfiniteCanvasStore,
               private _nodeRendererService: InfiniteCanvasNodeRendererService,
+              private _viewportService: InfiniteCanvasViewportService
   ) {
     effect(() => {
+      const viewport = this._viewportService.viewport();
       const nodeLayer: Container | null = this.nodeLayer();
       const doc: JSONCanvas | null = this._store.doc();
 
-      if (!nodeLayer || !doc) {
+      if (!viewport || !nodeLayer || !doc) {
         return;
       }
 
       for (const node of doc.getNodes()) {
-        this._renderNodeCard(nodeLayer, node);
+        this._renderNodeCard(viewport, nodeLayer, node);
       }
     });
   }
@@ -58,8 +61,6 @@ export class InfiniteCanvasNodeLayerService {
     const nodeLayer = new Container();
 
     nodeLayer.label = this.label;
-    nodeLayer.eventMode = 'static';
-    nodeLayer.hitArea = app.screen;
 
     this._onDragMove = (e: FederatedPointerEvent): void => {
       const dragTarget = this._store.dragTarget();
@@ -91,7 +92,7 @@ export class InfiniteCanvasNodeLayerService {
         return;
       }
 
-      nodeLayer.off('pointermove', this._onDragMove);
+      viewport.off('pointermove', this._onDragMove);
       this._store.setDragTarget(null);
 
       const draggedCard = nodeLayer.getChildByLabel(dragTarget.id);
@@ -103,25 +104,29 @@ export class InfiniteCanvasNodeLayerService {
       draggedCard.cursor = 'grab';
     };
 
-    nodeLayer.on('pointerup', this._onDragEnd);
-    nodeLayer.on('pointerupoutside', this._onDragEnd);
+    viewport.on('pointerup', this._onDragEnd);
+    viewport.on('pointerupoutside', this._onDragEnd);
 
     viewport.addChild(nodeLayer);
 
     return nodeLayer;
   }
 
-  private _renderNodeCard(nodeLayer: Container, node: GenericNode): void {
+  private _renderNodeCard(viewport: Viewport,
+                          nodeLayer: Container,
+                          node: GenericNode
+  ): void {
     let nodeCard: Container<ContainerChild> | null = nodeLayer.getChildByLabel(node.id);
 
     if (!nodeCard) {
-      nodeCard = this._createNodeCard(nodeLayer, node);
+      nodeCard = this._createNodeCard(viewport, nodeLayer, node);
     }
 
     this._updateNodeCardPosition(node, nodeCard);
   }
 
-  private _createNodeCard(nodeLayer: Container,
+  private _createNodeCard(viewport: Viewport,
+                          nodeLayer: Container,
                           node: GenericNode
   ): Container<ContainerChild> {
     const nodeCard = this._nodeRendererService.createNodeCard(node);
@@ -140,7 +145,7 @@ export class InfiniteCanvasNodeLayerService {
       });
 
       nodeCard.cursor = 'grabbing';
-      nodeLayer.on('pointermove', this._onDragMove);
+      viewport.on('pointermove', this._onDragMove);
     });
 
     nodeLayer.addChild(nodeCard);
