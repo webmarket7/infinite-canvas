@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Container, Graphics } from 'pixi.js';
-import { JSONCanvas, Edge, GenericNode } from '@trbn/jsoncanvas';
+import { JSONCanvas, GenericNode } from '@trbn/jsoncanvas';
 
 interface Point { x: number; y: number; }
 
