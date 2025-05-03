@@ -1,5 +1,5 @@
-import { ElementRef, Inject, Injectable } from '@angular/core';
-import { Application } from 'pixi.js';
+import { ElementRef, Inject, Injectable, Signal, signal, WritableSignal } from '@angular/core';
+import { Application, Renderer } from 'pixi.js';
 
 import {
   INFINITE_CANVAS_PIXI_APPLICATION_CONFIG,
@@ -9,14 +9,16 @@ import {
 
 @Injectable()
 export class InfiniteCanvasPixiApplicationService {
-  private _app?: Application;
+  private _app: WritableSignal<Application | null> = signal<Application | null>(null);
+
+  readonly app: Signal<Application | null> = this._app.asReadonly();
 
   constructor(@Inject(INFINITE_CANVAS_PIXI_APPLICATION_CONFIG) private _config: InfiniteCanvasPixiApplicationConfig) {
   }
 
-  async init(host: ElementRef<HTMLDivElement>): Promise<Application> {
-    if (this._app) {
-      return this._app;
+  async init(host: ElementRef<HTMLElement>): Promise<Application<Renderer>> {
+    if (this._app()) {
+      throw new Error('Application already initialized');
     }
 
     const app = new Application();
@@ -29,6 +31,17 @@ export class InfiniteCanvasPixiApplicationService {
 
     host.nativeElement.appendChild(app.canvas);
 
-    return (this._app = app);
+    this._app.set(app);
+
+    return app;
+  }
+
+  destroy(): void {
+    const app = this._app();
+
+    if (app) {
+      app.destroy(true, { children: true });
+      this._app.set(null);
+    }
   }
 }

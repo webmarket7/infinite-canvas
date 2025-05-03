@@ -1,3 +1,4 @@
+import { InfiniteCanvasStore } from './state';
 import {
   DEFAULT_INFINITE_CANVAS_PIXI_APPLICATION_CONFIG,
   INFINITE_CANVAS_PIXI_APPLICATION_CONFIG, InfiniteCanvasPixiApplicationService
@@ -9,19 +10,26 @@ import {
 import {
   DEFAULT_INFINITE_CANVAS_GRID_CONFIG,
   INFINITE_CANVAS_GRID_CONFIG,
-  InfiniteCanvasGridService,
+  InfiniteCanvasGridLayerService,
+  InfiniteCanvasGridRendererService,
 } from './grid';
-import { InfiniteCanvasNodeRendererService } from './node-renderer';
-import { InfiniteCanvasEdgeRendererService } from './edge-renderer';
+import { InfiniteCanvasEdgeLayerService, InfiniteCanvasEdgeRendererService } from './edge';
+import { InfiniteCanvasNodeLayerService, InfiniteCanvasNodeRendererService } from './node';
+import { InfiniteCanvasService } from './infinite-canvas.service';
 
 
 export const INFINITE_CANVAS_PROVIDERS = [
   { provide: INFINITE_CANVAS_PIXI_APPLICATION_CONFIG, useValue: DEFAULT_INFINITE_CANVAS_PIXI_APPLICATION_CONFIG },
   { provide: INFINITE_CANVAS_VIEWPORT_CONFIG, useValue: DEFAULT_INFINITE_CANVAS_VIEWPORT_CONFIG },
   { provide: INFINITE_CANVAS_GRID_CONFIG, useValue: DEFAULT_INFINITE_CANVAS_GRID_CONFIG },
+  InfiniteCanvasStore,
   InfiniteCanvasPixiApplicationService,
   InfiniteCanvasViewportService,
-  InfiniteCanvasGridService,
+  InfiniteCanvasGridLayerService,
+  InfiniteCanvasGridRendererService,
+  InfiniteCanvasNodeLayerService,
   InfiniteCanvasNodeRendererService,
+  InfiniteCanvasEdgeLayerService,
   InfiniteCanvasEdgeRendererService,
+  InfiniteCanvasService
 ];

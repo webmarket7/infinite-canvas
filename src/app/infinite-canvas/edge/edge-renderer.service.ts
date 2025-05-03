@@ -1,22 +1,22 @@
 import { Injectable } from '@angular/core';
-import { Container, Graphics } from 'pixi.js';
+import { Container, Graphics, Point } from 'pixi.js';
 import { JSONCanvas, GenericNode } from '@trbn/jsoncanvas';
 
-interface Point { x: number; y: number; }
 
 @Injectable()
 export class InfiniteCanvasEdgeRendererService {
+
   render(layer: Container, doc: JSONCanvas): void {
     layer.removeChildren();
 
     // map nodes by id
     const nodes = Object.fromEntries(
-      doc.getNodes().map(n => [n.id, n] as const)
+      doc.getNodes().map(n => [ n.id, n ] as const)
     );
 
     for (const edge of doc.getEdges()) {
       const from = nodes[edge.fromNode];
-      const to   = nodes[edge.toNode];
+      const to = nodes[edge.toNode];
       if (!from || !to) continue;
 
       // 1) anchors
@@ -33,17 +33,19 @@ export class InfiniteCanvasEdgeRendererService {
           if (d < best.dist) best = { dist: d, a: pa, b: pb };
         }
       }
-      if (!best.a || !best.b) continue;
+
+      if (!best.a || !best.b) {
+        continue;
+      }
+
       const pa = best.a, pb = best.b;
 
-      // 3) start circle
       layer.addChild(
         new Graphics()
-          .circle(pa.x, pa.y, 5)     // deprecated-free circle API
-          .fill(0x000000)            // modern fill()
+          .circle(pa.x, pa.y, 5)
+          .fill(0x000000)
       );
 
-      // 4) draw orthogonal path
       const horizontalFirst =
         Math.abs(pa.x - pb.x) >= Math.abs(pa.y - pb.y);
 
@@ -59,37 +61,31 @@ export class InfiniteCanvasEdgeRendererService {
       line.stroke();
       layer.addChild(line);
 
-      // 5) arrowhead at pb, aligned to last segment
       this._drawArrowhead(layer, pa, pb, horizontalFirst);
     }
   }
 
-  /** 4 points: top/bottom/left/right centers of a node. */
   private _getAnchors(n: GenericNode): Point[] {
     return [
-      { x: n.x + n.width/2, y: n.y           }, // top
-      { x: n.x + n.width/2, y: n.y + n.height }, // bottom
-      { x: n.x           , y: n.y + n.height/2 }, // left
-      { x: n.x + n.width , y: n.y + n.height/2 }  // right
+      new Point(n.x + n.width / 2, n.y),
+      new Point(n.x + n.width / 2, n.y + n.height),
+      new Point(n.x, n.y + n.height / 2),
+      new Point(n.x + n.width, n.y + n.height / 2)
     ];
   }
 
-  /**
-   * Draws a triangular arrowhead at `end`, pointing along the
-   * last segment direction (orthogonal only).
-   */
   private _drawArrowhead(
     layer: Container,
     start: Point,
-    end:   Point,
+    end: Point,
     horizontalFirst: boolean
   ): void {
-    const size = 10;  // length of the arrow “shaft”
-    const wing = 6;   // half-width of the triangle base
+    const size = 10;
+    const wing = 6;
     let pts: number[];
 
     if (horizontalFirst) {
-      // last segment is vertical: arrow pointing up or down
+      // the last segment is vertical: arrow pointing up or down
       if (end.y > start.y) {
         // pointing down
         pts = [
@@ -106,7 +102,7 @@ export class InfiniteCanvasEdgeRendererService {
         ];
       }
     } else {
-      // last segment is horizontal: arrow pointing left or right
+      // the last segment is horizontal: arrow pointing left or right
       if (end.x > start.x) {
         // pointing right
         pts = [
@@ -126,8 +122,8 @@ export class InfiniteCanvasEdgeRendererService {
 
     layer.addChild(
       new Graphics()
-        .poly(pts)       // v8 polygon API
-        .fill(0x000000)  // fill the arrowhead
+        .poly(pts)
+        .fill(0x000000)
     );
   }
 }

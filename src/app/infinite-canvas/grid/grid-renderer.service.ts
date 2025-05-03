@@ -1,42 +1,47 @@
 import { Inject, Injectable } from '@angular/core';
-import { Application, Container, Graphics, Point, Rectangle, Texture, TilingSprite } from 'pixi.js';
+import { Application, Container, ContainerChild, Graphics, Point, Rectangle, Texture, TilingSprite } from 'pixi.js';
 import { Viewport } from 'pixi-viewport';
 
 import { INFINITE_CANVAS_GRID_CONFIG, InfiniteCanvasGridConfig } from './grid.config';
 
 
 @Injectable()
-export class InfiniteCanvasGridService {
+export class InfiniteCanvasGridRendererService {
   constructor(@Inject(INFINITE_CANVAS_GRID_CONFIG) private _config: InfiniteCanvasGridConfig) {
   }
 
-  attach(app: Application, targetLayer: Container, viewport: Viewport): void {
-    const texture = this._createTexture(app);
-    const grid = new TilingSprite({
-      texture,
-      width: 1,   // resized immediately by handler()
-      height: 1
-    });
+  attachGridSprite(app: Application, viewport: Viewport, gridLayer: Container<ContainerChild>): void {
+    const gridSprite: TilingSprite = this._createGridSprite(app);
 
-    targetLayer.addChild(grid);
+    const handler = () => syncGrid(viewport, gridSprite, this._config.cellSize);
 
-    const handler = () => syncGrid(viewport, grid, this._config.cellSize);
-
-    handler();                              // initial fit
+    handler();
     viewport.on('moved', handler);
     viewport.on('zoomed', handler);
     viewport.on('resize', handler);
+
+    gridLayer.addChild(gridSprite);
+  }
+
+  private _createGridSprite(app: Application): TilingSprite {
+    const texture = this._createTexture(app);
+
+    return new TilingSprite({
+      texture,
+      width: 1,
+      height: 1
+    });
   }
 
   private _createTexture(app: Application): Texture {
     const { cellSize, dotColor, dotRadius } = this._config;
 
-    const g = new Graphics()
+    const graphics: Graphics = new Graphics()
       .rect(0, 0, cellSize, cellSize).fill({ color: 0xffffff, alpha: 0 })
       .circle(dotRadius, dotRadius, dotRadius).fill(dotColor);
 
     return app.renderer.generateTexture({
-      target: g,
+      target: graphics,
       frame: new Rectangle(0, 0, cellSize, cellSize),
       resolution: window.devicePixelRatio,
       clearColor: 0x00000000
